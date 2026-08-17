@@ -1,0 +1,12 @@
+node_modules/
+dist/
+cdk.out/
+*.js
+!infra/jest.config.js
+*.d.ts
+.env
+.env.local
+__pycache__/
+*.pyc
+.DS_Store
+*.log
