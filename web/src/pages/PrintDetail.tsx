@@ -6,6 +6,7 @@ import { StatusBadge } from "../components/StatusBadge";
 import { ProgressBar } from "../components/ProgressBar";
 import { formatDate, formatDuration, formatGrams } from "../utils/format";
 import { materialRefFor } from "../data/materials";
+import { ErrorBoundary } from "../components/ErrorBoundary";
 
 // three.js is heavy (~1MB) — only the detail page needs it, and only when
 // a print actually has an STL, so keep it out of the homepage's bundle.
@@ -103,9 +104,11 @@ export function PrintDetail() {
           <span className="eyebrow" style={{ display: "block", marginBottom: 8 }}>
             modelo 3d
           </span>
-          <Suspense fallback={<div className="stl-viewer" />}>
-            <StlViewer url={stlUrl} />
-          </Suspense>
+          <ErrorBoundary fallback={<div className="stl-viewer empty-state">não deu pra carregar o visualizador 3d agora — usa o download do STL.</div>}>
+            <Suspense fallback={<div className="stl-viewer" />}>
+              <StlViewer url={stlUrl} />
+            </Suspense>
+          </ErrorBoundary>
         </>
       )}
 
