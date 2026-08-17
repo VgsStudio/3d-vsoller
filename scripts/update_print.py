@@ -34,8 +34,9 @@ import argparse
 import json
 import mimetypes
 import os
+import subprocess
 import sys
-import urllib.error
+import tempfile
 import urllib.request
 
 API_BASE = os.environ.get("VSOLLER_3D_API_BASE", "https://api.3d.vsoller.com.br")
@@ -49,18 +50,35 @@ def _api_key(args) -> str:
 
 
 def _request(method: str, path: str, api_key: str, payload: dict | None = None):
+    # Shells out to curl (with the JSON body written to a temp file) instead of
+    # using urllib.request directly. On this Windows/Git-Bash setup, urllib was
+    # observed to intermittently corrupt non-ASCII (accented) bytes somewhere
+    # between the client and API Gateway — reproducible, byte-verified via
+    # DynamoDB, but never root-caused (the bytes handed to urlopen() and the
+    # immediate response were both provably correct; only a later independent
+    # GET showed corruption). curl with --data-binary @file never reproduced
+    # it across many repeated tests, so it's the pragmatic fix here.
     url = f"{API_BASE}{path}"
-    data = json.dumps(payload).encode("utf-8") if payload is not None else None
-    req = urllib.request.Request(url, data=data, method=method)
-    req.add_header("Content-Type", "application/json")
-    req.add_header("x-api-key", api_key)
+    body_path = None
     try:
-        with urllib.request.urlopen(req) as resp:
-            body = resp.read()
-            return json.loads(body) if body else None
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        sys.exit(f"HTTP {exc.code} calling {method} {path}: {detail}")
+        cmd = ["curl", "-s", "-X", method, url, "-H", f"x-api-key: {api_key}"]
+        if payload is not None:
+            fd, body_path = tempfile.mkstemp(suffix=".json")
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                json.dump(payload, fh)
+            cmd += ["-H", "Content-Type: application/json", "--data-binary", f"@{body_path}"]
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+        if result.returncode != 0:
+            sys.exit(f"curl failed calling {method} {path}: {result.stderr}")
+        if not result.stdout:
+            return None
+        parsed = json.loads(result.stdout)
+        if isinstance(parsed, dict) and "error" in parsed and len(parsed) == 1:
+            sys.exit(f"API error calling {method} {path}: {parsed['error']}")
+        return parsed
+    finally:
+        if body_path:
+            os.unlink(body_path)
 
 
 def _load_json_file(path: str | None) -> dict:
@@ -87,7 +105,7 @@ def cmd_create(args):
         payload["id"] = args.id
     payload.update(_load_json_file(args.json_file))
     result = _request("POST", "/prints", api_key, payload)
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    print(json.dumps(result, indent=2, ensure_ascii=True))
 
 
 def cmd_update(args):
@@ -115,7 +133,7 @@ def cmd_update(args):
     if not payload:
         sys.exit("Nothing to update — pass at least one field.")
     result = _request("PATCH", f"/prints/{args.id}", api_key, payload)
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    print(json.dumps(result, indent=2, ensure_ascii=True))
 
 
 def cmd_upload(args):

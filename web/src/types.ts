@@ -1,9 +1,21 @@
-export type PrintStatus = "queued" | "printing" | "paused" | "completed" | "failed" | "cancelled";
+export type PrintStatus =
+  | "queued"
+  | "printing"
+  | "paused"
+  | "completed"
+  | "failed"
+  | "cancelled"
+  | "open"
+  | "monitoring"
+  | "resolved";
+
+export type EntryCategory = "print" | "issue" | "maintenance";
 
 export interface Print {
   id: string;
   title: string;
   description?: string;
+  category?: EntryCategory;
   status: PrintStatus;
   progressPercent?: number;
   material?: string;

@@ -12,6 +12,7 @@ _table = _dynamodb.Table(os.environ["TABLE_NAME"])
 ALLOWED_FIELDS = {
     "title",
     "description",
+    "category",
     "status",
     "progressPercent",
     "material",
@@ -29,7 +30,8 @@ ALLOWED_FIELDS = {
     "tags",
 }
 
-STATUSES = {"queued", "printing", "paused", "completed", "failed", "cancelled"}
+CATEGORIES = {"print", "issue", "maintenance"}
+STATUSES = {"queued", "printing", "paused", "completed", "failed", "cancelled", "open", "resolved", "monitoring"}
 
 
 def _to_decimal(value):
@@ -48,6 +50,7 @@ def new_print(data: dict) -> dict:
         "id": data.get("id") or str(uuid.uuid4())[:8],
         "title": data.get("title", "Sem titulo"),
         "description": data.get("description", ""),
+        "category": data.get("category", "print"),
         "status": data.get("status", "queued"),
         "progressPercent": _to_decimal(data.get("progressPercent", 0)),
         "material": data.get("material", ""),

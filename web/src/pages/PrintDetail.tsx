@@ -5,6 +5,13 @@ import type { Print } from "../types";
 import { StatusBadge } from "../components/StatusBadge";
 import { ProgressBar } from "../components/ProgressBar";
 import { formatDate, formatDuration, formatGrams } from "../utils/format";
+import { materialRefFor } from "../data/materials";
+
+const CATEGORY_LABEL: Record<string, string> = {
+  print: "Impressão",
+  issue: "Problema",
+  maintenance: "Manutenção",
+};
 
 export function PrintDetail() {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +46,7 @@ export function PrintDetail() {
   const bedPhoto = mediaUrl(print.bedPhotoKey);
   const photos = (print.photos ?? []).map((key) => mediaUrl(key)).filter(Boolean) as string[];
   const allPhotos = [render, bedPhoto, ...photos].filter(Boolean) as string[];
+  const materialRef = materialRefFor(print.material);
 
   return (
     <div>
@@ -47,6 +55,7 @@ export function PrintDetail() {
       </Link>
 
       <div className="detail-header">
+        <span className="eyebrow">{CATEGORY_LABEL[print.category ?? "print"]}</span>
         <StatusBadge status={print.status} />
         <h2 style={{ margin: 0, fontSize: 26 }}>{print.title}</h2>
         {print.description && <p style={{ color: "var(--text-muted)", margin: 0 }}>{print.description}</p>}
@@ -88,6 +97,19 @@ export function PrintDetail() {
         <div className="file-links">
           {print.stlKey && <a href={mediaUrl(print.stlKey)}>Baixar STL</a>}
           {print.gcodeKey && <a href={mediaUrl(print.gcodeKey)}>Baixar G-code</a>}
+        </div>
+      )}
+
+      {materialRef && (
+        <div className="materials-section" style={{ marginTop: 32 }}>
+          <h2>Material usado</h2>
+          <div className="material-card">
+            <div className="name">{materialRef.name}</div>
+            <div className="desc">{materialRef.description}</div>
+            <a href={materialRef.buyUrl} target="_blank" rel="noreferrer">
+              onde comprar ↗
+            </a>
+          </div>
         </div>
       )}
     </div>

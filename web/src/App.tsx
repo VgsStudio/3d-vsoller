@@ -6,8 +6,12 @@ function App() {
   return (
     <div className="container">
       <header className="site-header">
+        <span className="eyebrow">central de impressão · vsoller.com.br</span>
         <h1>3D · Vitor Soller</h1>
-        <p>Log público das impressões 3D — Ender 3 V3, PLA &amp; PETG</p>
+        <p className="lede">
+          Timeline pública das minhas impressões 3D — o que está imprimindo agora, o histórico completo, problemas de
+          hardware e manutenções. Só leitura, atualizado direto da impressora.
+        </p>
       </header>
 
       <Routes>
