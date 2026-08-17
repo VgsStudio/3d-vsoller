@@ -120,6 +120,8 @@ def cmd_update(args):
         payload["filamentGrams"] = args.grams
     if args.dimensions is not None:
         payload["dimensions"] = args.dimensions
+    if args.material is not None:
+        payload["material"] = args.material
     if args.duration is not None:
         payload["durationSeconds"] = args.duration
     if args.finished_at is not None:
@@ -207,6 +209,7 @@ def main():
     p_update.add_argument("--progress", type=float)
     p_update.add_argument("--grams", type=float)
     p_update.add_argument("--dimensions", help="e.g. '120x80x30mm'")
+    p_update.add_argument("--material")
     p_update.add_argument("--duration", type=int, help="Seconds")
     p_update.add_argument("--started-at")
     p_update.add_argument("--finished-at")

@@ -142,21 +142,36 @@ def save_state(state):
 
 
 def clean_title(filename):
-    name = re.sub(r"\.gco(de)?$", "", filename or "Impressao", flags=re.IGNORECASE)
+    # Arc Welder (and possibly other post-processors) postfix the gcode
+    # filename with e.g. ".aw" before the extension — strip that too so an
+    # auto-created title doesn't read "Foo.Aw".
+    name = re.sub(r"(\.aw)?\.gco(de)?$", "", filename or "Impressao", flags=re.IGNORECASE)
     name = name.replace("_", " ").replace("-", " ").strip()
     return name.title() or "Impressao"
 
 
 def find_existing_printing_entry():
+    # Adopt a "printing" entry if one exists — but also fall back to a
+    # freshly-created "queued" one (created in the last 5 minutes). There's
+    # an inherent race between "tell OctoPrint to print" and "flip the site
+    # entry to printing" in the usual pre-create-then-start flow; without
+    # this fallback a lucky-timed tick creates a bare duplicate entry
+    # instead of adopting the nicely-titled one that was about to be ready
+    # (hit this for real 2026-08-17, see project_vsoller_3d_platform.md).
     try:
         items = site_request("GET", "/prints")["items"]
     except Exception:
         return None
-    printing = [i for i in items if i.get("status") == "printing"]
-    if not printing:
+    now = time.time()
+    candidates = [
+        i
+        for i in items
+        if i.get("status") == "printing" or (i.get("status") == "queued" and now - i.get("createdAt", 0) < 300)
+    ]
+    if not candidates:
         return None
-    printing.sort(key=lambda i: i.get("updatedAt", 0), reverse=True)
-    return printing[0]["id"]
+    candidates.sort(key=lambda i: i.get("updatedAt", 0), reverse=True)
+    return candidates[0]["id"]
 
 
 def upload_photo(site_id):
