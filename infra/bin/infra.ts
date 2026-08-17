@@ -11,7 +11,7 @@ if (!adminApiKey) {
 }
 
 new ThreeDStack(app, "Vsoller3DStack", {
-  env: { account: "605914448173", region: "us-east-1" },
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: "us-east-1" },
   siteDomain: "3d.vsoller.com.br",
   apiDomain: "api.3d.vsoller.com.br",
   parentZoneName: "vsoller.com.br",
