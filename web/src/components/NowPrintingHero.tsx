@@ -67,6 +67,12 @@ export function NowPrintingHero({ print }: { print: Print }) {
             </>
           ) : null}
         </div>
+        {print.nozzleTemp != null && (
+          <div className="now-printing-temps">
+            <span>🔥 {print.nozzleTemp.toFixed(0)}°C / {(print.nozzleTarget ?? 0).toFixed(0)}°C</span>
+            <span>🛏️ {print.bedTemp?.toFixed(0)}°C / {(print.bedTarget ?? 0).toFixed(0)}°C</span>
+          </div>
+        )}
       </div>
     </Link>
   );

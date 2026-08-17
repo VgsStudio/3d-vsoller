@@ -200,6 +200,19 @@ a {
   color: var(--text-muted);
 }
 
+.now-printing-temps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
 /* ---------- About strip ---------- */
 
 .about-strip {

@@ -22,6 +22,10 @@ export interface Print {
   dimensions?: string;
   filamentGrams?: number;
   printer?: string;
+  nozzleTemp?: number;
+  nozzleTarget?: number;
+  bedTemp?: number;
+  bedTarget?: number;
   startedAt?: string | null;
   finishedAt?: string | null;
   durationSeconds?: number | null;

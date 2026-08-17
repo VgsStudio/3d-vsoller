@@ -36,7 +36,7 @@ export function Home() {
     }
 
     load();
-    const interval = setInterval(load, 20000);
+    const interval = setInterval(load, 5000);
     return () => {
       cancelled = true;
       clearInterval(interval);

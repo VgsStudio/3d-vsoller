@@ -38,7 +38,7 @@ export function PrintDetail() {
     }
 
     load();
-    const interval = setInterval(load, 10000);
+    const interval = setInterval(load, 5000);
     return () => {
       cancelled = true;
       clearInterval(interval);

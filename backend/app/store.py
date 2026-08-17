@@ -30,6 +30,10 @@ ALLOWED_FIELDS = {
     "renderKey",
     "tags",
     "dimensions",
+    "nozzleTemp",
+    "nozzleTarget",
+    "bedTemp",
+    "bedTarget",
 }
 
 CATEGORIES = {"print", "issue", "maintenance"}
