@@ -187,7 +187,7 @@ def main():
     p_create.add_argument("--id", help="Custom id/slug (default: random)")
     p_create.add_argument("--title", required=True)
     p_create.add_argument("--description")
-    p_create.add_argument("--status", default="queued", choices=["queued", "printing", "paused", "completed", "failed", "cancelled"])
+    p_create.add_argument("--status", default="queued", choices=["queued", "printing", "paused", "completed", "failed", "cancelled", "open", "monitoring", "resolved"])
     p_create.add_argument("--material")
     p_create.add_argument("--printer")
     p_create.add_argument("--grams", type=float)
@@ -199,7 +199,7 @@ def main():
 
     p_update = sub.add_parser("update", help="Update an existing print entry")
     p_update.add_argument("id")
-    p_update.add_argument("--status", choices=["queued", "printing", "paused", "completed", "failed", "cancelled"])
+    p_update.add_argument("--status", choices=["queued", "printing", "paused", "completed", "failed", "cancelled", "open", "monitoring", "resolved"])
     p_update.add_argument("--progress", type=float)
     p_update.add_argument("--grams", type=float)
     p_update.add_argument("--duration", type=int, help="Seconds")

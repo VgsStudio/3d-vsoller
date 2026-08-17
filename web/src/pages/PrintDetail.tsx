@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchPrint, mediaUrl } from "../api/client";
 import type { Print } from "../types";
@@ -6,6 +6,10 @@ import { StatusBadge } from "../components/StatusBadge";
 import { ProgressBar } from "../components/ProgressBar";
 import { formatDate, formatDuration, formatGrams } from "../utils/format";
 import { materialRefFor } from "../data/materials";
+
+// three.js is heavy (~1MB) — only the detail page needs it, and only when
+// a print actually has an STL, so keep it out of the homepage's bundle.
+const StlViewer = lazy(() => import("../components/StlViewer").then((m) => ({ default: m.StlViewer })));
 
 const CATEGORY_LABEL: Record<string, string> = {
   print: "Impressão",
@@ -47,6 +51,7 @@ export function PrintDetail() {
   const photos = (print.photos ?? []).map((key) => mediaUrl(key)).filter(Boolean) as string[];
   const allPhotos = [render, bedPhoto, ...photos].filter(Boolean) as string[];
   const materialRef = materialRefFor(print.material);
+  const stlUrl = mediaUrl(print.stlKey);
 
   return (
     <div>
@@ -92,6 +97,17 @@ export function PrintDetail() {
           <div className="value">{print.printer || "—"}</div>
         </div>
       </div>
+
+      {stlUrl && (
+        <>
+          <span className="eyebrow" style={{ display: "block", marginBottom: 8 }}>
+            modelo 3d
+          </span>
+          <Suspense fallback={<div className="stl-viewer" />}>
+            <StlViewer url={stlUrl} />
+          </Suspense>
+        </>
+      )}
 
       {(print.stlKey || print.gcodeKey) && (
         <div className="file-links">

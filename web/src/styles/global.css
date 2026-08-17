@@ -483,6 +483,30 @@ a {
   font-weight: 600;
 }
 
+.stl-viewer {
+  position: relative;
+  height: 360px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+.stl-viewer canvas {
+  cursor: grab;
+}
+
+.stl-viewer-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
 .file-links {
   display: flex;
   gap: 10px;

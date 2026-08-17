@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+from datetime import datetime, timezone
 from decimal import Decimal
 
 import boto3
@@ -127,5 +128,24 @@ def list_prints(include_hidden: bool = False) -> list[dict]:
             break
         scan_kwargs["ExclusiveStartKey"] = resp["LastEvaluatedKey"]
 
-    items.sort(key=lambda i: i.get("createdAt", 0), reverse=True)
+    items.sort(key=_timeline_sort_key, reverse=True)
     return items
+
+
+def _timeline_sort_key(item: dict) -> float:
+    # Sort by when the thing actually happened (finishedAt, else startedAt),
+    # not by when it was entered into the system — an issue/maintenance
+    # entry logged today about something that happened last week must still
+    # sort as last week's event, not today's.
+    for field in ("finishedAt", "startedAt"):
+        value = item.get(field)
+        if not value:
+            continue
+        try:
+            dt = datetime.fromisoformat(value)
+        except ValueError:
+            continue
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.timestamp()
+    return float(item.get("createdAt", 0))
