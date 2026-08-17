@@ -7,6 +7,7 @@ import { ProgressBar } from "../components/ProgressBar";
 import { formatDate, formatDuration, formatGrams } from "../utils/format";
 import { materialRefFor } from "../data/materials";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { MaterialCard } from "../components/MaterialCard";
 
 // three.js is heavy (~1MB) — only the detail page needs it, and only when
 // a print actually has an STL, so keep it out of the homepage's bundle.
@@ -57,7 +58,10 @@ export function PrintDetail() {
   return (
     <div>
       <Link to="/" className="back-link">
-        ← todas as impressões
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        todas as impressões
       </Link>
 
       <div className="detail-header">
@@ -120,14 +124,12 @@ export function PrintDetail() {
       )}
 
       {materialRef && (
-        <div className="materials-section" style={{ marginTop: 32 }}>
-          <h2>Material usado</h2>
-          <div className="material-card">
-            <div className="name">{materialRef.name}</div>
-            <div className="desc">{materialRef.description}</div>
-            <a href={materialRef.buyUrl} target="_blank" rel="noreferrer">
-              onde comprar ↗
-            </a>
+        <div style={{ marginTop: 32 }}>
+          <span className="eyebrow" style={{ display: "block", marginBottom: 12 }}>
+            material usado
+          </span>
+          <div className="materials-grid" style={{ paddingBottom: 0, gridTemplateColumns: "minmax(240px, 320px)" }}>
+            <MaterialCard material={materialRef} />
           </div>
         </div>
       )}
