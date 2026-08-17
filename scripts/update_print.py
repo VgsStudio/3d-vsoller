@@ -95,6 +95,7 @@ def cmd_create(args):
         "description": args.description or "",
         "status": args.status,
         "material": args.material or "",
+        "dimensions": args.dimensions or "",
         "printer": args.printer or "Ender 3 V3",
         "filamentGrams": args.grams,
         "progressPercent": args.progress,
@@ -117,6 +118,8 @@ def cmd_update(args):
         payload["progressPercent"] = args.progress
     if args.grams is not None:
         payload["filamentGrams"] = args.grams
+    if args.dimensions is not None:
+        payload["dimensions"] = args.dimensions
     if args.duration is not None:
         payload["durationSeconds"] = args.duration
     if args.finished_at is not None:
@@ -191,6 +194,7 @@ def main():
     p_create.add_argument("--material")
     p_create.add_argument("--printer")
     p_create.add_argument("--grams", type=float)
+    p_create.add_argument("--dimensions", help="e.g. '120x80x30mm'")
     p_create.add_argument("--progress", type=float, default=0)
     p_create.add_argument("--started-at")
     p_create.add_argument("--hidden", action="store_true", default=False)
@@ -202,6 +206,7 @@ def main():
     p_update.add_argument("--status", choices=["queued", "printing", "paused", "completed", "failed", "cancelled", "open", "monitoring", "resolved"])
     p_update.add_argument("--progress", type=float)
     p_update.add_argument("--grams", type=float)
+    p_update.add_argument("--dimensions", help="e.g. '120x80x30mm'")
     p_update.add_argument("--duration", type=int, help="Seconds")
     p_update.add_argument("--started-at")
     p_update.add_argument("--finished-at")

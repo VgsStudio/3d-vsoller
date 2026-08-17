@@ -19,6 +19,7 @@ export interface Print {
   status: PrintStatus;
   progressPercent?: number;
   material?: string;
+  dimensions?: string;
   filamentGrams?: number;
   printer?: string;
   startedAt?: string | null;

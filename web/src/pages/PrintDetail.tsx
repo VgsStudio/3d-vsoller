@@ -101,6 +101,12 @@ export function PrintDetail() {
           <div className="label">Impressora</div>
           <div className="value">{print.printer || "—"}</div>
         </div>
+        {print.dimensions && (
+          <div className="stat-item">
+            <div className="label">Medidas</div>
+            <div className="value">{print.dimensions}</div>
+          </div>
+        )}
       </div>
 
       {stlUrl && (

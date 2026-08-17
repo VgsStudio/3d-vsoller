@@ -29,6 +29,7 @@ ALLOWED_FIELDS = {
     "bedPhotoKey",
     "renderKey",
     "tags",
+    "dimensions",
 }
 
 CATEGORIES = {"print", "issue", "maintenance"}
@@ -67,6 +68,7 @@ def new_print(data: dict) -> dict:
         "bedPhotoKey": data.get("bedPhotoKey"),
         "renderKey": data.get("renderKey"),
         "tags": data.get("tags", []),
+        "dimensions": data.get("dimensions", ""),
         "createdAt": now,
         "updatedAt": now,
     }

@@ -4,7 +4,10 @@ import { PrintDetail } from "./pages/PrintDetail";
 
 function App() {
   return (
-    <div className="container">
+    <>
+      <div className="bg-glow" aria-hidden />
+      <div className="bg-grid" aria-hidden />
+      <div className="container">
       <header className="site-header">
         <span className="eyebrow">central de impressão · vsoller.com.br</span>
         <h1>3D · Vitor Soller</h1>
@@ -22,7 +25,8 @@ function App() {
       <footer className="site-footer">
         <a href="https://vsoller.com.br">vsoller.com.br</a>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }
 
