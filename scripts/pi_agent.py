@@ -24,15 +24,42 @@ check), not systemd, since this account has no passwordless sudo. See
 import json
 import os
 import re
+import sys
 import time
 import traceback
 import urllib.error
 import urllib.request
 
+# Secrets are NEVER hardcoded here (this file is committed to a *public*
+# repo) — they're loaded from ~/.vsoller3d_agent.env on the Pi at runtime,
+# a file that never leaves the Pi and is chmod 600. See
+# pi_agent_install.sh / README for how that file gets created.
+def _load_env_file(path):
+    values = {}
+    if os.path.exists(path):
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, value = line.partition("=")
+                values[key.strip()] = value.strip()
+    return values
+
+
+_ENV_FILE = os.path.expanduser("~/.vsoller3d_agent.env")
+_env = {**_load_env_file(_ENV_FILE), **os.environ}
+
 OCTOPRINT_BASE = "http://localhost"
-OCTOPRINT_API_KEY = "BF171C0825DE4B67AEDAE5E8EBAB6B28"
-SITE_API_BASE = "https://api.3d.vsoller.com.br"
-SITE_API_KEY = "ylKkUnYaaooSxVl-BlxMS7dJVAlwqaU03KWL0e99Llk"
+OCTOPRINT_API_KEY = _env.get("OCTOPRINT_API_KEY")
+SITE_API_BASE = _env.get("VSOLLER_3D_API_BASE", "https://api.3d.vsoller.com.br")
+SITE_API_KEY = _env.get("VSOLLER_3D_API_KEY")
+
+if not OCTOPRINT_API_KEY or not SITE_API_KEY:
+    sys.exit(
+        f"Missing OCTOPRINT_API_KEY / VSOLLER_3D_API_KEY. "
+        f"Create {_ENV_FILE} (chmod 600) with both, see pi_agent_install.sh."
+    )
 
 STATE_FILE = os.path.expanduser("~/.vsoller3d_agent_state.json")
 POLL_INTERVAL = 5  # seconds
