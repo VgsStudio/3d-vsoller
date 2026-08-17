@@ -10,7 +10,9 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import * as path from "path";
+import * as fs from "fs";
 
 export interface ThreeDStackProps extends cdk.StackProps {
   siteDomain: string; // 3d.vsoller.com.br
@@ -154,6 +156,17 @@ export class ThreeDStack extends cdk.Stack {
         { httpStatus: 404, responseHttpStatus: 200, responsePagePath: "/index.html" },
       ],
     });
+
+    const webDist = path.join(__dirname, "..", "..", "web", "dist");
+    if (fs.existsSync(webDist)) {
+      new s3deploy.BucketDeployment(this, "DeploySite", {
+        sources: [s3deploy.Source.asset(webDist)],
+        destinationBucket: siteBucket,
+        distribution,
+        distributionPaths: ["/*"],
+        prune: true,
+      });
+    }
 
     new route53.ARecord(this, "SiteAliasRecord", {
       zone,

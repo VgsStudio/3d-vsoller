@@ -1,0 +1,50 @@
+name: Deploy 3d.vsoller.com.br
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-3d-vsoller
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            infra/package-lock.json
+
+      - name: Install & build frontend
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install infra dependencies
+        working-directory: infra
+        run: npm ci
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::605914448173:role/github-actions-3d-vsoller-deploy
+          aws-region: us-east-1
+
+      - name: Deploy CDK stacks
+        working-directory: infra
+        env:
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
+        run: npx cdk deploy --all --require-approval never
