@@ -86,6 +86,34 @@ def octoprint_get_binary(path):
         return resp.read()
 
 
+def octoprint_post(path, payload):
+    req = urllib.request.Request(
+        f"{OCTOPRINT_BASE}{path}",
+        data=json.dumps(payload).encode("utf-8"),
+        method="POST",
+    )
+    req.add_header("X-Api-Key", OCTOPRINT_API_KEY)
+    req.add_header("Content-Type", "application/json")
+    with urllib.request.urlopen(req, timeout=8):
+        pass
+
+
+def ensure_connected():
+    """This printer's OctoPrint has autoconnect=false (confirmed) — after
+    any OctoPrint restart (e.g. the Pi rebooting), the serial connection
+    to the printer has to be re-established manually or it just sits
+    disconnected forever. Do that automatically here so a Pi reboot
+    doesn't permanently strand the printer."""
+    try:
+        conn = octoprint_get("/api/connection")
+        if conn.get("current", {}).get("state") in ("Closed", "Error", "Offline", None):
+            log("printer not connected — attempting to reconnect")
+            octoprint_post("/api/connection", {"command": "connect", "port": "/dev/ttyUSB0", "baudrate": 115200})
+    except Exception:
+        log("ensure_connected failed:")
+        log(traceback.format_exc())
+
+
 def site_request(method, path, payload=None):
     url = f"{SITE_API_BASE}{path}"
     data = json.dumps(payload).encode("utf-8") if payload is not None else None
@@ -152,8 +180,11 @@ def now_iso():
 
 
 def tick(state):
+    # /api/job works regardless of connection state; /api/printer (temps)
+    # returns 409 when the printer isn't connected at all — fetch job
+    # first so a disconnected printer doesn't short-circuit this whole
+    # tick before we even get a chance to try reconnecting.
     job = octoprint_get("/api/job")
-    printer = octoprint_get("/api/printer")
 
     job_state = job.get("state", "")
     is_active = job_state in ("Printing", "Paused")
@@ -161,15 +192,20 @@ def tick(state):
     progress = job.get("progress", {}) or {}
     completion = progress.get("completion") or 0
 
-    temps = printer.get("temperature", {}) or {}
-    nozzle = temps.get("tool0", {}) or {}
-    bed = temps.get("bed", {}) or {}
-    temp_payload = {
-        "nozzleTemp": round(nozzle.get("actual") or 0, 1),
-        "nozzleTarget": round(nozzle.get("target") or 0, 1),
-        "bedTemp": round(bed.get("actual") or 0, 1),
-        "bedTarget": round(bed.get("target") or 0, 1),
-    }
+    try:
+        printer = octoprint_get("/api/printer")
+        temps = printer.get("temperature", {}) or {}
+        nozzle = temps.get("tool0", {}) or {}
+        bed = temps.get("bed", {}) or {}
+        temp_payload = {
+            "nozzleTemp": round(nozzle.get("actual") or 0, 1),
+            "nozzleTarget": round(nozzle.get("target") or 0, 1),
+            "bedTemp": round(bed.get("actual") or 0, 1),
+            "bedTarget": round(bed.get("target") or 0, 1),
+        }
+    except urllib.error.HTTPError:
+        # 409 Printer is not operational — not connected, no temps to report.
+        temp_payload = {}
 
     if is_active:
         if state["site_id"] is None or state["job_name"] != job_name:
@@ -205,9 +241,21 @@ def tick(state):
                 log("photo upload failed:")
                 log(traceback.format_exc())
     else:
+        disconnected = job_state in ("Closed", "Offline", "") or job_state is None
+        if disconnected:
+            # Most likely cause: OctoPrint itself just restarted (e.g. the
+            # Pi rebooted) and autoconnect is off for this printer — it
+            # will sit disconnected forever otherwise. Try to fix that
+            # regardless of whether we were tracking a print.
+            ensure_connected()
+
         if state["site_id"] is not None:
             print_time = progress.get("printTime")
-            if "error" in job_state.lower():
+            if disconnected or "error" in job_state.lower():
+                # Serial connection was lost mid-print (Pi reboot, cable
+                # issue, etc.) — the print really did stop, "failed" is
+                # more honest than "cancelled" (which implies a deliberate
+                # stop while still connected).
                 end_status = "failed"
             elif job_state == "Operational" and print_time and completion >= 95:
                 end_status = "completed"
