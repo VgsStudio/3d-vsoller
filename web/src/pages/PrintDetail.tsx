@@ -19,6 +19,15 @@ const CATEGORY_LABEL: Record<string, string> = {
   maintenance: "🔨 Manutenção",
 };
 
+// Keep the photo strip to a handful of representative shots instead of
+// dumping every ~60s webcam snapshot from a long print — pick `max` evenly
+// spaced across the sequence (always keeping the first and last).
+function sampleMax<T>(items: T[], max: number): T[] {
+  if (items.length <= max) return items;
+  const step = (items.length - 1) / (max - 1);
+  return Array.from({ length: max }, (_, i) => items[Math.round(i * step)]);
+}
+
 export function PrintDetail() {
   const { id } = useParams<{ id: string }>();
   const [print, setPrint] = useState<Print | null>(null);
@@ -51,7 +60,7 @@ export function PrintDetail() {
   const render = mediaUrl(print.renderKey);
   const bedPhoto = mediaUrl(print.bedPhotoKey);
   const photos = (print.photos ?? []).map((key) => mediaUrl(key)).filter(Boolean) as string[];
-  const allPhotos = [render, bedPhoto, ...photos].filter(Boolean) as string[];
+  const allPhotos = sampleMax([render, bedPhoto, ...photos].filter(Boolean) as string[], 6);
   const materialRef = materialRefFor(print.material);
   const stlUrl = mediaUrl(print.stlKey);
 
@@ -72,12 +81,17 @@ export function PrintDetail() {
         {print.status === "printing" && <ProgressBar percent={print.progressPercent ?? 0} />}
       </div>
 
-      {allPhotos.length > 0 && (
-        <div className="detail-photos">
-          {allPhotos.map((src) => (
-            <img key={src} src={src} alt={print.title} loading="lazy" />
-          ))}
-        </div>
+      {stlUrl && (
+        <>
+          <span className="eyebrow" style={{ display: "block", marginBottom: 8 }}>
+            modelo 3d
+          </span>
+          <ErrorBoundary fallback={<div className="stl-viewer empty-state">não deu pra carregar o visualizador 3d agora — usa o download do STL.</div>}>
+            <Suspense fallback={<div className="stl-viewer" />}>
+              <StlViewer url={stlUrl} />
+            </Suspense>
+          </ErrorBoundary>
+        </>
       )}
 
       <div className="stat-grid">
@@ -109,19 +123,6 @@ export function PrintDetail() {
         )}
       </div>
 
-      {stlUrl && (
-        <>
-          <span className="eyebrow" style={{ display: "block", marginBottom: 8 }}>
-            modelo 3d
-          </span>
-          <ErrorBoundary fallback={<div className="stl-viewer empty-state">não deu pra carregar o visualizador 3d agora — usa o download do STL.</div>}>
-            <Suspense fallback={<div className="stl-viewer" />}>
-              <StlViewer url={stlUrl} />
-            </Suspense>
-          </ErrorBoundary>
-        </>
-      )}
-
       {(print.stlKey || print.gcodeKey) && (
         <div className="file-links">
           {print.stlKey && <a href={mediaUrl(print.stlKey)}>Baixar STL</a>}
@@ -136,6 +137,19 @@ export function PrintDetail() {
           </span>
           <div className="materials-grid" style={{ paddingBottom: 0, gridTemplateColumns: "minmax(240px, 320px)" }}>
             <MaterialCard material={materialRef} />
+          </div>
+        </div>
+      )}
+
+      {allPhotos.length > 0 && (
+        <div style={{ marginTop: 32 }}>
+          <span className="eyebrow" style={{ display: "block", marginBottom: 12 }}>
+            fotos
+          </span>
+          <div className="detail-photos">
+            {allPhotos.map((src) => (
+              <img key={src} src={src} alt={print.title} loading="lazy" />
+            ))}
           </div>
         </div>
       )}

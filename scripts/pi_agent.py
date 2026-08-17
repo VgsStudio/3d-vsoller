@@ -202,7 +202,13 @@ def tick(state):
     job = octoprint_get("/api/job")
 
     job_state = job.get("state", "")
-    is_active = job_state in ("Printing", "Paused")
+    # "Finishing" is a real intermediate OctoPrint state between "Printing"
+    # and "Operational" (seen 2026-08-17: a print that finished 100%
+    # successfully got caught here and fell into the close-out branch below
+    # with job_state != "Operational", defaulting to "cancelled"). Treat it
+    # as still active so we don't close the entry out until OctoPrint
+    # actually reports Operational/completion.
+    is_active = job_state in ("Printing", "Paused", "Finishing")
     job_name = (job.get("job", {}) or {}).get("file", {}).get("name")
     progress = job.get("progress", {}) or {}
     completion = progress.get("completion") or 0
@@ -241,7 +247,7 @@ def tick(state):
 
         payload = {
             "progressPercent": round(completion, 1),
-            "status": "printing" if job_state == "Printing" else "paused",
+            "status": "paused" if job_state == "Paused" else "printing",
             **temp_payload,
         }
         site_request("PATCH", f"/prints/{state['site_id']}", payload)
