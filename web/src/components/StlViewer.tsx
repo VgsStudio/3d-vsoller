@@ -18,10 +18,14 @@ interface Props {
    * pointer interaction — for small in-card previews inside a scrollable
    * list, where drag-to-orbit would fight the page scroll. */
   interactive?: boolean;
+  /** Whether the model spins on its own. Default true; pass false and flip
+   * it on hover (see TimelineEntry) so a page full of cards doesn't spin
+   * all at once. */
+  autoRotate?: boolean;
   className?: string;
 }
 
-export function StlViewer({ url, interactive = true, className }: Props) {
+export function StlViewer({ url, interactive = true, autoRotate = true, className }: Props) {
   return (
     <div className={`stl-viewer ${className ?? ""}`}>
       <Canvas camera={{ position: [60, 60, 60], fov: 40 }}>
@@ -40,7 +44,7 @@ export function StlViewer({ url, interactive = true, className }: Props) {
         </Suspense>
         <OrbitControls
           makeDefault
-          autoRotate
+          autoRotate={autoRotate}
           autoRotateSpeed={1.2}
           enableZoom={interactive}
           enablePan={false}

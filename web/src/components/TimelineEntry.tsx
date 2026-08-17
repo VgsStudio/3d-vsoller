@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { Print } from "../types";
@@ -11,9 +11,9 @@ import { formatDate, formatDuration, formatGrams } from "../utils/format";
 const StlViewer = lazy(() => import("./StlViewer").then((m) => ({ default: m.StlViewer })));
 
 const CATEGORY_LABEL: Record<string, string> = {
-  print: "Impressão",
-  issue: "Problema",
-  maintenance: "Manutenção",
+  print: "🖨️ Impressão",
+  issue: "⚠️ Problema",
+  maintenance: "🔨 Manutenção",
 };
 
 export function TimelineEntry({ print, index }: { print: Print; index: number }) {
@@ -21,6 +21,7 @@ export function TimelineEntry({ print, index }: { print: Print; index: number })
   const stlUrl = mediaUrl(print.stlKey);
   const staticThumb = mediaUrl(print.renderKey) ?? mediaUrl(print.bedPhotoKey) ?? mediaUrl(print.photos?.[0]);
   const when = print.finishedAt ?? print.startedAt ?? print.createdAt;
+  const [hovered, setHovered] = useState(false);
 
   return (
     <motion.div
@@ -31,7 +32,13 @@ export function TimelineEntry({ print, index }: { print: Print; index: number })
       transition={{ duration: 0.35, delay: Math.min(index, 6) * 0.03 }}
     >
       <span className={`timeline-dot dot-${dotClassFor(print.status)}`} />
-      <Link to={`/impressoes/${print.id}`} className="timeline-card" style={{ display: "block" }}>
+      <Link
+        to={`/impressoes/${print.id}`}
+        className="timeline-card"
+        style={{ display: "block" }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
         <div className="timeline-top">
           <span className="timeline-date">
             {CATEGORY_LABEL[category] ?? category} · {formatDate(when)}
@@ -58,7 +65,7 @@ export function TimelineEntry({ print, index }: { print: Print; index: number })
           <ErrorBoundary fallback={staticThumb ? <div className="timeline-thumb"><img src={staticThumb} alt={print.title} loading="lazy" /></div> : null}>
             <Suspense fallback={<div className="timeline-thumb timeline-thumb-loading" />}>
               <div className="timeline-thumb">
-                <StlViewer url={stlUrl} interactive={false} className="timeline-thumb-canvas" />
+                <StlViewer url={stlUrl} interactive={false} autoRotate={hovered} className="timeline-thumb-canvas" />
               </div>
             </Suspense>
           </ErrorBoundary>

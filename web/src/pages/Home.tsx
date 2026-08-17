@@ -5,15 +5,17 @@ import { AboutStrip } from "../components/AboutStrip";
 import { StatsStrip } from "../components/StatsStrip";
 import { TimelineEntry } from "../components/TimelineEntry";
 import { MaterialsSection } from "../components/MaterialsSection";
+import { NowPrintingHero } from "../components/NowPrintingHero";
 
-type TabId = EntryCategory | "all" | "materials";
+type TabId = EntryCategory | "all" | "materials" | "about";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "all", label: "Tudo" },
-  { id: "print", label: "Impressão" },
-  { id: "issue", label: "Problemas" },
-  { id: "maintenance", label: "Manutenção" },
-  { id: "materials", label: "Materiais" },
+  { id: "print", label: "🖨️ Impressão" },
+  { id: "issue", label: "⚠️ Problemas" },
+  { id: "maintenance", label: "🔨 Manutenção" },
+  { id: "materials", label: "🧵 Materiais" },
+  { id: "about", label: "👋 Sobre" },
 ];
 
 export function Home() {
@@ -46,15 +48,22 @@ export function Home() {
     document.title = active ? "🖨️ imprimindo… · 3D Vitor Soller" : "3D · Vitor Soller";
   }, [prints]);
 
+  const activePrints = useMemo(() => prints?.filter((p) => p.status === "printing") ?? [], [prints]);
+
   const filtered = useMemo(() => {
     if (!prints) return null;
-    if (tab === "all" || tab === "materials") return prints;
-    return prints.filter((p) => (p.category ?? "print") === tab);
+    // Whatever's printing right now lives in the hero above, not the
+    // timeline — it "graduates" into history once it's actually done.
+    const rest = prints.filter((p) => p.status !== "printing");
+    if (tab === "all" || tab === "materials" || tab === "about") return rest;
+    return rest.filter((p) => (p.category ?? "print") === tab);
   }, [prints, tab]);
 
   return (
     <div>
-      <AboutStrip />
+      {activePrints.map((p) => (
+        <NowPrintingHero key={p.id} print={p} />
+      ))}
 
       {prints && <StatsStrip prints={prints} />}
 
@@ -66,9 +75,9 @@ export function Home() {
         ))}
       </div>
 
-      {tab === "materials" ? (
-        <MaterialsSection />
-      ) : (
+      {tab === "materials" && <MaterialsSection />}
+      {tab === "about" && <AboutStrip />}
+      {tab !== "materials" && tab !== "about" && (
         <>
           {error && <div className="empty-state">{error}</div>}
           {!error && filtered === null && <div className="empty-state">carregando…</div>}

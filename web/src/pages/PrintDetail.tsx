@@ -14,9 +14,9 @@ import { MaterialCard } from "../components/MaterialCard";
 const StlViewer = lazy(() => import("../components/StlViewer").then((m) => ({ default: m.StlViewer })));
 
 const CATEGORY_LABEL: Record<string, string> = {
-  print: "Impressão",
-  issue: "Problema",
-  maintenance: "Manutenção",
+  print: "🖨️ Impressão",
+  issue: "⚠️ Problema",
+  maintenance: "🔨 Manutenção",
 };
 
 export function PrintDetail() {
