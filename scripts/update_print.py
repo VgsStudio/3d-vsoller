@@ -4,6 +4,13 @@ Zero third-party dependencies (stdlib only) so it runs with any Python 3.10+
 without a venv. Reads the admin API key from the VSOLLER_3D_API_KEY env var,
 or from --api-key.
 
+IMPORTANT (Windows/Git Bash gotcha): accented text (á, ç, ã, ...) passed as a
+CLI argument through Git Bash to the native Windows python.exe can get mangled
+before Python ever sees it (argv encoding mismatch between MSYS2 and the
+Windows console). If title/description have accents, don't risk it — write a
+small JSON file (e.g. via a text editor, guaranteed real UTF-8) and pass
+--json-file payload.json instead; its fields are merged into the request.
+
 Examples
 --------
 Create a print:
@@ -56,6 +63,13 @@ def _request(method: str, path: str, api_key: str, payload: dict | None = None):
         sys.exit(f"HTTP {exc.code} calling {method} {path}: {detail}")
 
 
+def _load_json_file(path: str | None) -> dict:
+    if not path:
+        return {}
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
 def cmd_create(args):
     api_key = _api_key(args)
     payload = {
@@ -71,6 +85,7 @@ def cmd_create(args):
     }
     if args.id:
         payload["id"] = args.id
+    payload.update(_load_json_file(args.json_file))
     result = _request("POST", "/prints", api_key, payload)
     print(json.dumps(result, indent=2, ensure_ascii=False))
 
@@ -96,6 +111,7 @@ def cmd_update(args):
         payload["description"] = args.description
     if args.hidden is not None:
         payload["hidden"] = args.hidden
+    payload.update(_load_json_file(args.json_file))
     if not payload:
         sys.exit("Nothing to update — pass at least one field.")
     result = _request("PATCH", f"/prints/{args.id}", api_key, payload)
@@ -160,6 +176,7 @@ def main():
     p_create.add_argument("--progress", type=float, default=0)
     p_create.add_argument("--started-at")
     p_create.add_argument("--hidden", action="store_true", default=False)
+    p_create.add_argument("--json-file", help="JSON file with extra/overriding fields (safe for accented text)")
     p_create.set_defaults(func=cmd_create)
 
     p_update = sub.add_parser("update", help="Update an existing print entry")
@@ -173,6 +190,7 @@ def main():
     p_update.add_argument("--title")
     p_update.add_argument("--description")
     p_update.add_argument("--hidden", type=lambda s: s.lower() == "true")
+    p_update.add_argument("--json-file", help="JSON file with extra/overriding fields (safe for accented text)")
     p_update.set_defaults(func=cmd_update)
 
     p_upload = sub.add_parser("upload", help="Upload a photo/STL/gcode via presigned URL")
