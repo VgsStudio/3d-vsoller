@@ -335,6 +335,19 @@ a {
   display: block;
 }
 
+.timeline-thumb-loading {
+  height: 160px;
+  background: var(--bg-elevated);
+}
+
+.timeline-thumb .stl-viewer.timeline-thumb-canvas {
+  height: 160px;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  pointer-events: none;
+}
+
 /* ---------- Badges / progress (shared) ---------- */
 
 .badge {

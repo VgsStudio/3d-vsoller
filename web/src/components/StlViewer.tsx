@@ -12,9 +12,18 @@ function Model({ url }: { url: string }) {
   );
 }
 
-export function StlViewer({ url }: { url: string }) {
+interface Props {
+  url: string;
+  /** Full drag/zoom controls + hint text. false = auto-rotate only, no
+   * pointer interaction — for small in-card previews inside a scrollable
+   * list, where drag-to-orbit would fight the page scroll. */
+  interactive?: boolean;
+  className?: string;
+}
+
+export function StlViewer({ url, interactive = true, className }: Props) {
   return (
-    <div className="stl-viewer">
+    <div className={`stl-viewer ${className ?? ""}`}>
       <Canvas camera={{ position: [60, 60, 60], fov: 40 }}>
         {/* Self-contained lighting only — no external HDR/environment fetch,
             which is a hard dependency for a public site (a rate-limited or
@@ -29,9 +38,16 @@ export function StlViewer({ url }: { url: string }) {
             </Center>
           </Bounds>
         </Suspense>
-        <OrbitControls makeDefault autoRotate autoRotateSpeed={1.2} />
+        <OrbitControls
+          makeDefault
+          autoRotate
+          autoRotateSpeed={1.2}
+          enableZoom={interactive}
+          enablePan={false}
+          enableRotate={interactive}
+        />
       </Canvas>
-      <div className="stl-viewer-hint">arraste pra girar · scroll pra zoom</div>
+      {interactive && <div className="stl-viewer-hint">arraste pra girar · scroll pra zoom</div>}
     </div>
   );
 }

@@ -1,10 +1,14 @@
+import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { Print } from "../types";
 import { mediaUrl } from "../api/client";
 import { StatusBadge, dotClassFor } from "./StatusBadge";
 import { ProgressBar } from "./ProgressBar";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { formatDate, formatDuration, formatGrams } from "../utils/format";
+
+const StlViewer = lazy(() => import("./StlViewer").then((m) => ({ default: m.StlViewer })));
 
 const CATEGORY_LABEL: Record<string, string> = {
   print: "Impressão",
@@ -14,7 +18,8 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 export function TimelineEntry({ print, index }: { print: Print; index: number }) {
   const category = print.category ?? "print";
-  const thumb = mediaUrl(print.renderKey) ?? mediaUrl(print.bedPhotoKey) ?? mediaUrl(print.photos?.[0]);
+  const stlUrl = mediaUrl(print.stlKey);
+  const staticThumb = mediaUrl(print.renderKey) ?? mediaUrl(print.bedPhotoKey) ?? mediaUrl(print.photos?.[0]);
   const when = print.finishedAt ?? print.startedAt ?? print.createdAt;
 
   return (
@@ -49,10 +54,20 @@ export function TimelineEntry({ print, index }: { print: Print; index: number })
             </div>
           )
         )}
-        {thumb && (
-          <div className="timeline-thumb">
-            <img src={thumb} alt={print.title} loading="lazy" />
-          </div>
+        {stlUrl ? (
+          <ErrorBoundary fallback={staticThumb ? <div className="timeline-thumb"><img src={staticThumb} alt={print.title} loading="lazy" /></div> : null}>
+            <Suspense fallback={<div className="timeline-thumb timeline-thumb-loading" />}>
+              <div className="timeline-thumb">
+                <StlViewer url={stlUrl} interactive={false} className="timeline-thumb-canvas" />
+              </div>
+            </Suspense>
+          </ErrorBoundary>
+        ) : (
+          staticThumb && (
+            <div className="timeline-thumb">
+              <img src={staticThumb} alt={print.title} loading="lazy" />
+            </div>
+          )
         )}
       </Link>
     </motion.div>
