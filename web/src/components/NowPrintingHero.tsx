@@ -19,13 +19,22 @@ function elapsedLabel(startedAt?: string | null): string {
 }
 
 export function NowPrintingHero({ print }: { print: Print }) {
+  // While it's actually printing, real webcam proof beats a synthetic
+  // render — show the most recent snapshot first. Falls back to the
+  // interactive model, then any static image, if no live photo exists yet.
+  const livePhoto = mediaUrl(print.photos?.[print.photos.length - 1]);
   const stlUrl = mediaUrl(print.stlKey);
   const staticThumb = mediaUrl(print.renderKey) ?? mediaUrl(print.bedPhotoKey);
 
   return (
     <Link to={`/impressoes/${print.id}`} className="now-printing">
       <div className="now-printing-visual">
-        {stlUrl ? (
+        {livePhoto ? (
+          <>
+            <img src={livePhoto} alt={print.title} />
+            <span className="now-printing-photo-tag">📷 ao vivo</span>
+          </>
+        ) : stlUrl ? (
           <ErrorBoundary fallback={staticThumb ? <img src={staticThumb} alt={print.title} /> : <div />}>
             <Suspense fallback={<div className="now-printing-visual-loading" />}>
               <StlViewer url={stlUrl} interactive={false} className="now-printing-canvas" />

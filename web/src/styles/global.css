@@ -119,8 +119,24 @@ a {
 }
 
 .now-printing-visual {
+  position: relative;
   height: 260px;
   background: var(--bg-elevated);
+}
+
+.now-printing-photo-tag {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(13, 15, 18, 0.75);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  backdrop-filter: blur(4px);
 }
 
 .now-printing-visual img {
