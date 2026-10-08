@@ -1,6 +1,6 @@
 import json
 
-from . import media, store
+from . import mcp, media, store
 from .auth import is_authorized
 from .utils import error, response
 
@@ -14,6 +14,10 @@ def lambda_handler(event, context):
         return response(204)
 
     try:
+        if raw_path == "/mcp" and method == "POST":
+            reply = mcp.handle(_parse_body(event))
+            return response(200, reply) if reply else response(202)
+
         if raw_path == "/prints" and method == "GET":
             return handle_list()
 

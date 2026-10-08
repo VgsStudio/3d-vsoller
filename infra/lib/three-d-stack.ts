@@ -115,6 +115,7 @@ export class ThreeDStack extends cdk.Stack {
 
     const integration = new apigwv2Integrations.HttpLambdaIntegration("ApiIntegration", apiFn);
 
+    httpApi.addRoutes({ path: "/mcp", methods: [apigwv2.HttpMethod.POST], integration });
     httpApi.addRoutes({ path: "/prints", methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST], integration });
     httpApi.addRoutes({
       path: "/prints/{id}",
