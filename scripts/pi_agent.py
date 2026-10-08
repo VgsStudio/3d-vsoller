@@ -250,6 +250,8 @@ def tick(state):
             "status": "paused" if job_state == "Paused" else "printing",
             **temp_payload,
         }
+        if progress.get("printTimeLeft") is not None:  # seconds, OctoPrint's own estimate
+            payload["printTimeLeft"] = progress["printTimeLeft"]
         site_request("PATCH", f"/prints/{state['site_id']}", payload)
 
         now = time.time()

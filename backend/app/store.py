@@ -34,6 +34,7 @@ ALLOWED_FIELDS = {
     "nozzleTarget",
     "bedTemp",
     "bedTarget",
+    "printTimeLeft",
 }
 
 CATEGORIES = {"print", "issue", "maintenance"}

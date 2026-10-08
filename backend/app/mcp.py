@@ -10,6 +10,12 @@ def _tool(name, desc):
 TOOLS = [
     _tool("get_print_status", "Current 3D print: what it is, percent done, elapsed and estimated remaining time. "
           "Use for 'what am I printing', 'how far along', 'how long is left'."),
+    {
+        "name": "find_print",
+        "description": "Look up a past 3D print by (part of) its name, e.g. 'how did the keychain go'.",
+        "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]},
+    },
+    _tool("get_recent_prints", "The last 5 finished or running 3D prints with their results."),
     _tool("get_temperatures", "Current nozzle and bed temperatures (actual and target) of the 3D printer."),
     _tool("get_last_print", "The most recently finished 3D print: title, result, duration and filament used."),
     _tool("get_print_stats", "Totals: number of parts printed, total print time and filament used."),
@@ -39,7 +45,9 @@ def print_status() -> str:
     pct = float(p.get("progressPercent") or 0)
     out = f"{p['title']} is {'paused' if p['status'] == 'paused' else 'printing'}, {pct:.0f} percent done."
     started = p.get("startedAt")
-    if started and 0 < pct < 100:
+    if p.get("printTimeLeft") is not None:
+        out += f" About {_fmt(float(p['printTimeLeft']))} remaining."
+    elif started and 0 < pct < 100:
         from datetime import datetime, timedelta, timezone
 
         try:
@@ -75,6 +83,17 @@ def last_print() -> str:
     return out
 
 
+def find_print(name: str = "") -> str:
+    hits = [p for p in _items() if name.lower() in p["title"].lower()][:3]
+    if not hits:
+        return f"I found no print matching {name}."
+    return " ".join(f"{p['title']}: {p['status']}" + (f", {_fmt(float(p['durationSeconds']))}." if p.get("durationSeconds") else ".") for p in hits)
+
+
+def recent_prints() -> str:
+    return "; ".join(f"{p['title']} ({p['status']})" for p in _items()[:5]) or "No prints yet."
+
+
 def stats() -> str:
     done = [p for p in _items() if p.get("status") == "completed"]
     secs = sum(float(p.get("durationSeconds") or 0) for p in done)
@@ -90,8 +109,10 @@ def open_issues() -> str:
 
 
 HANDLERS = {
+    "find_print": find_print,
     "get_print_status": print_status,
     "get_temperatures": temperatures,
+    "get_recent_prints": recent_prints,
     "get_last_print": last_print,
     "get_print_stats": stats,
     "get_open_issues": open_issues,
@@ -115,7 +136,7 @@ def handle(msg: dict):
         fn = HANDLERS.get(msg["params"]["name"])
         if not fn:
             return {"jsonrpc": "2.0", "id": mid, "error": {"code": -32602, "message": "Unknown tool"}}
-        result = {"content": [{"type": "text", "text": fn()}]}
+        result = {"content": [{"type": "text", "text": fn(**msg["params"].get("arguments", {}))}]}
     elif method == "ping":
         result = {}
     else:
