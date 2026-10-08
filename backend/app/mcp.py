@@ -64,9 +64,10 @@ def _active():
 
 
 def temperatures() -> str:
-    p = _active()
-    if not p or p.get("nozzleTemp") is None:
-        return "No print is running, so I have no live temperatures."
+    p = store.get_print("printer")
+    # ponytail: pi_agent beats every 30s; >2 min silent = printer/Pi off
+    if not p or time.time() - float(p["updatedAt"]) > 120 or p.get("nozzleTemp") is None:
+        return "I can't read the printer right now. It may be off or disconnected."
     f = lambda k: f"{float(p.get(k) or 0):.0f}"  # noqa: E731
     return f"Nozzle {f('nozzleTemp')} of {f('nozzleTarget')} degrees, bed {f('bedTemp')} of {f('bedTarget')}."
 

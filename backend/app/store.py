@@ -35,6 +35,7 @@ ALLOWED_FIELDS = {
     "bedTemp",
     "bedTarget",
     "printTimeLeft",
+    "printerState",
 }
 
 CATEGORIES = {"print", "issue", "maintenance"}

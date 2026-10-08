@@ -194,6 +194,25 @@ def now_iso():
     return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime())
 
 
+_last_beat = 0
+
+
+def heartbeat(job_state, temp_payload):
+    """Keep the hidden `printer` record fresh even when idle (temps while cooling/preheating,
+    and its updatedAt doubles as an "agent/printer alive" signal for the MCP)."""
+    global _last_beat
+    if time.time() - _last_beat < 30:
+        return
+    payload = {"printerState": job_state or "Offline", **temp_payload}
+    try:
+        site_request("PATCH", "/prints/printer", payload)
+    except urllib.error.HTTPError as exc:
+        if exc.code != 404:
+            raise
+        site_request("POST", "/prints", {"id": "printer", "title": "printer", "hidden": True, **payload})
+    _last_beat = time.time()
+
+
 def tick(state):
     # /api/job works regardless of connection state; /api/printer (temps)
     # returns 409 when the printer isn't connected at all — fetch job
@@ -227,6 +246,8 @@ def tick(state):
     except urllib.error.HTTPError:
         # 409 Printer is not operational — not connected, no temps to report.
         temp_payload = {}
+
+    heartbeat(job_state, temp_payload)
 
     if is_active:
         if state["site_id"] is None or state["job_name"] != job_name:
