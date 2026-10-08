@@ -101,8 +101,8 @@ export class ThreeDStack extends cdk.Stack {
         domainName: apiDomainName,
       },
       corsPreflight: {
-        allowOrigins: [`https://${props.siteDomain}`, "http://localhost:5173"],
-        allowHeaders: ["Content-Type", "x-api-key"],
+        allowOrigins: [`https://${props.siteDomain}`, "http://localhost:5173", "https://mcp.ziziyi.com", "http://localhost:6274"],
+        allowHeaders: ["Content-Type", "x-api-key", "Accept", "Authorization", "mcp-protocol-version", "mcp-session-id"],
         allowMethods: [
           apigwv2.CorsHttpMethod.GET,
           apigwv2.CorsHttpMethod.POST,
@@ -115,7 +115,7 @@ export class ThreeDStack extends cdk.Stack {
 
     const integration = new apigwv2Integrations.HttpLambdaIntegration("ApiIntegration", apiFn);
 
-    httpApi.addRoutes({ path: "/mcp", methods: [apigwv2.HttpMethod.POST], integration });
+    httpApi.addRoutes({ path: "/mcp", methods: [apigwv2.HttpMethod.POST, apigwv2.HttpMethod.GET], integration });
     httpApi.addRoutes({ path: "/prints", methods: [apigwv2.HttpMethod.GET, apigwv2.HttpMethod.POST], integration });
     httpApi.addRoutes({
       path: "/prints/{id}",

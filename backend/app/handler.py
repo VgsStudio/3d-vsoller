@@ -14,6 +14,9 @@ def lambda_handler(event, context):
         return response(204)
 
     try:
+        if raw_path == "/mcp" and method == "GET":
+            return error(405, "No server-initiated stream")  # Streamable HTTP: GET/SSE is optional
+
         if raw_path == "/mcp" and method == "POST":
             reply = mcp.handle(_parse_body(event))
             return response(200, reply) if reply else response(202)
